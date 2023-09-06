@@ -107,62 +107,37 @@ WHERE dea.continent is not null
 ORDER BY 2,3 
 
 
+-- Using CTE to perform Calculation on Partition By in previous query
 
--- CTE
-
-With PopvsVac (Continent, Location, Date, Population, new_vaccinations, RollingPeopleVaccinated)
-as
-(
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
-From `iconic-works-359616.CovidData.covid deaths`  dea
+WITH PopvsVac AS (
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date) AS RollingPeopleVaccinated
+FROM `iconic-works-359616.CovidData.covid deaths`  dea
 JOIN `iconic-works-359616.CovidData.Covid Vaccinations` vac
-	On dea.location = vac.location
+	ON dea.location = vac.location
 	and dea.date = vac.date
-where dea.continent is not null 
---order by 2,3
-)
-Select *, (RollingPeopleVaccinated/Population)*100
-From PopvsVac
-
--- TEMP TABLE
-
-DROP Table if exists #PercentPopulationVaccinated
-CREATE Table #PercentPopulationVaccinated
-(
-Continent string(255),
-Location string(255),
-Date datetime,
-Population numeric,
-new_vaccinations numeric,
-RollingPeopleVaccinated numeric
+WHERE dea.continent is not null 
 )
 
-Insert into #PercentPopulationVaccinated 
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
-From `iconic-works-359616.CovidData.covid deaths`  dea
-Join `iconic-works-359616.CovidData.Covid Vaccinations` vac
-	On dea.location = vac.location
-	and dea.date = vac.date
-
-
-Select *, (RollingPeopleVaccinated/Population)*100
-From #PercentPopulationVaccinated
-
+SELECT *, (RollingPeopleVaccinated/Population)*100 
+FROM PopvsVac
+ORDER BY Location,Date
 
 
 
 -- Creating view to store data
 
-Create View PercentPopulationVaccinated as
+Create View `iconic-works-359616.CovidData.PercentPopulationVaccinated` as
 Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
 From `iconic-works-359616.CovidData.covid deaths`  dea
 JOIN `iconic-works-359616.CovidData.Covid Vaccinations` vac
 	On dea.location = vac.location
 	and dea.date = vac.date
 where dea.continent is not null 
+
+
+
+
+
 
