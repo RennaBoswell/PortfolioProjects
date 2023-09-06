@@ -1,3 +1,5 @@
+-- To check if data is correctly imported
+
 Select *
 From `iconic-works-359616.CovidData.Covid Vaccinations`
 Order by 3,4
@@ -7,12 +9,13 @@ FROM `iconic-works-359616.CovidData.covid deaths`
 WHERE continent is not null
 ORDER BY 3,4
 
+-- starting data
 
 SELECT location, date, total_cases, new_cases, total_deaths, population
 FROM `iconic-works-359616.CovidData.covid deaths`
 ORDER BY 1,2 
 
--- looking at total cases vs total deaths
+-- Total cases vs Total deaths
 
 SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as PercentPopulationInfected
 FROM `iconic-works-359616.CovidData.covid deaths`
@@ -20,7 +23,7 @@ WHERE location like '%States%'
 ORDER BY 1,2 
 
 
--- Looking at total cases vs population
+-- Total cases vs Population
 
 SELECT location, date, population, total_cases, (total_cases/population)*100 as PercentPopulationInfected
 FROM `iconic-works-359616.CovidData.covid deaths`
@@ -128,8 +131,8 @@ From PopvsVac
 DROP Table if exists #PercentPopulationVaccinated
 CREATE Table #PercentPopulationVaccinated
 (
-Continent nvarchar(255),
-Location nvarchar(255),
+Continent string(255),
+Location string(255),
 Date datetime,
 Population numeric,
 new_vaccinations numeric,
@@ -144,8 +147,7 @@ From `iconic-works-359616.CovidData.covid deaths`  dea
 Join `iconic-works-359616.CovidData.Covid Vaccinations` vac
 	On dea.location = vac.location
 	and dea.date = vac.date
---where dea.continent is not null 
---order by 2,3
+
 
 Select *, (RollingPeopleVaccinated/Population)*100
 From #PercentPopulationVaccinated
@@ -158,7 +160,6 @@ From #PercentPopulationVaccinated
 Create View PercentPopulationVaccinated as
 Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
 , SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
--- (RollingPeopleVaccinated/population)*100
 From `iconic-works-359616.CovidData.covid deaths`  dea
 JOIN `iconic-works-359616.CovidData.Covid Vaccinations` vac
 	On dea.location = vac.location
